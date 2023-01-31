@@ -1,9 +1,10 @@
 # High-resolution schemes
-Contains both 5th-order-WENO and MUSCL scheme
+- Contains both 5th-order-WENO and MUSCL scheme
+- Hydrodynamic or Magnetohydrodynamic solver
 
 1. 1st-order Godunov
 2. 2nd-order Monotonized Central (MC) 
-3. 5th-order WENO
+3. 5th-order WENO (JS)
 
 
 Example simulation on shock-bubble interaction: 
