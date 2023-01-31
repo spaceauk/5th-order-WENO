@@ -7,5 +7,5 @@
 3. 5th-order WENO (JS)
 
 
-Example simulation on shock-bubble interaction: 
+Example simulation on shock-bubble interaction (400 by 200): 
 https://www.youtube.com/watch?v=HPZ6TjSnV1I&t=1s&ab_channel=Spaceduck496
