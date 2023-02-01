@@ -1,5 +1,5 @@
 # High-resolution schemes
-- Contains both 5th-order-WENO and MUSCL scheme
+- Contains both 5th-order-WENO and MUSCL schemes
 - Hydrodynamic or Magnetohydrodynamic solver
 
 1. 1st-order Godunov
