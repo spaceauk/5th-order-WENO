@@ -9,3 +9,6 @@
 
 Example simulation on shock-bubble interaction (400 by 200): 
 https://www.youtube.com/watch?v=HPZ6TjSnV1I&t=1s&ab_channel=Spaceduck496
+![den_n_p](https://user-images.githubusercontent.com/64028216/216842603-724e618c-1cf5-49af-851f-1bd4fae4223e.png)
+![vel](https://user-images.githubusercontent.com/64028216/216842635-2e14e490-845e-483b-a142-1c99c492d6bc.png)
+
