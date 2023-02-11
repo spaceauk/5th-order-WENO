@@ -6,7 +6,7 @@ CMPR = g++
 CPPFLAGS = 
 
 CPP =
-#CFLAGS = -std=c++11 -Wall
+CFLAGS = -std=c++17 -Wall
 
 OBJ = main.o meshblock.o IC2Dtype.o MUSCL2D.o slopelimiter.o celledges.o riemannS.o savedata.o WENO2D.o  
 EXEC = main.x
