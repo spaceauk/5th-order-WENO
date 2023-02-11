@@ -7,7 +7,7 @@ void RUSA(vector<real> wL,vector<real> wR,real gamma,vector<real> &flux);
 
 void riemannS(string fluxMth,vector<real> wL,vector<real> wR,real gamma,char direc,vector<real> &flux) {
 	vector<real> wL_int(8),wR_int(8);
-	for (int i=0; i<sizeof(wL); i++) {
+	for (int i=0; i<size(wL); i++) {
 		wL_int[i]=wL[i]; wR_int[i]=wR[i];
 	}
 	if (direc=='x') {
@@ -16,7 +16,7 @@ void riemannS(string fluxMth,vector<real> wL,vector<real> wR,real gamma,char dir
 		wL_int[2]=wL[1];
 		wR_int[1]=wR[2]; 
 		wR_int[2]=wR[1];
-		if (sizeof(wL)==8) {
+		if (size(wL)==8) {
 			wL_int[5]=wL[6]; // Swapped magnetic direction
 			wL_int[6]=wL[5];
 			wR_int[5]=wR[6]; 
@@ -27,7 +27,7 @@ void riemannS(string fluxMth,vector<real> wL,vector<real> wR,real gamma,char dir
 		throw exception();
 	}
 
-	vector<real> flux_int(sizeof(flux));
+	vector<real> flux_int(size(flux));
 	if (fluxMth=="RUSA") {
 		RUSA(wL_int,wR_int,gamma,flux_int);
 	} else {
@@ -35,12 +35,12 @@ void riemannS(string fluxMth,vector<real> wL,vector<real> wR,real gamma,char dir
 		throw exception();
 	}
 
-	for (int i=0; i<sizeof(wL); i++){flux[i]=flux_int[i];}
+	for (int i=0; i<size(wL); i++){flux[i]=flux_int[i];}
 	if (direc=='x') {
 	} else if (direc=='y'){
 		flux[1]=flux_int[2]; // Swapped velocity direction
 		flux[2]=flux_int[1];
-		if (sizeof(wL)==8) {
+		if (size(wL)==8) {
 			flux[5]=flux_int[6]; // Swapped magnetic firection
 			flux[6]=flux_int[5];
 		}
@@ -62,7 +62,7 @@ void RUSA(vector<real> wL,vector<real> wR,real gamma,vector<real> &flux){
 	eL=eL*wL[0];
 	// Specific enthalpy
 	real HL=(eL+wL[4]+0.5*MAG(wL[5],wL[6],wL[7]))/wL[0];
-	vector<real> qL(sizeof(wL)), FL(sizeof(wL));
+	vector<real> qL(size(wL)), FL(size(wL));
 	qL=wL;
 	qL[1]=wL[0]*wL[1]; qL[2]=wL[0]*wL[2]; qL[3]=wL[0]*wL[3];
 	qL[4]=eL;
@@ -81,7 +81,7 @@ void RUSA(vector<real> wL,vector<real> wR,real gamma,vector<real> &flux){
         eR=eR*wR[0];
         // Specific enthalpy
         real HR=(eR+wR[4]+0.5*MAG(wR[5],wR[6],wR[7]))/wR[0];
-        vector<real> qR(sizeof(wR)), FR(sizeof(wR));
+        vector<real> qR(size(wR)), FR(size(wR));
         qR=wR;
         qR[1]=wR[0]*wR[1]; qR[2]=wR[0]*wR[2]; qR[3]=wR[0]*wR[3];
         qR[4]=eR;
