@@ -1,6 +1,6 @@
 # High-resolution schemes
 - Contain both 5th-order-WENO (Weighted Essentially Non-Oscillatory) and MUSCL (Monotonic Upstream-centered Scheme for Conservation Laws) schemes
-- Hydrodynamic or Magnetohydrodynamic (MHD) solver
+- Hydrodynamic or Magnetohydrodynamic (MHD) solver. Make use of dynamic memory management to minimize the amount of memory required.
 
 1. 1st-order Godunov
 2. 2nd-order Monotonized Central (MC) 
