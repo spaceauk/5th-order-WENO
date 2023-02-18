@@ -1,8 +1,37 @@
 #include<fstream>  // input & output
+#include<iomanip>  // setw()
+#include<sstream>		    
 
 #include"defs.hpp"
 
-void savedata(meshblock &dom) {
+void save4py(meshblock &dom, int id, real t) {
+
+	stringstream ss;
+	ss<<setw(3)<<setfill('0')<<id;
+	string idd=ss.str();
+	dom.fname="./data/"+dom.IC+idd+"t_"+to_string(t)+".dat";
+
+	ofstream Wdata;
+	int width=16;
+	Wdata.open(dom.fname);
+	for (int j=1; j<dom.ny-1; j++) {
+		for (int i=1; i<dom.nx-1; i++) {
+			real x=dom.dx*i, y=dom.dy*j;
+			// x,y,r,u,v,w,p, (can add T when viscous flux added)
+			Wdata<<setw(width)<<x<<setw(width)<<y<<
+				setw(width)<<dom.W[i][j][0]<<
+				setw(width)<<dom.W[i][j][1]<<setw(width)<<dom.W[i][j][2]<<setw(width)<<dom.W[i][j][3]<<
+				setw(width)<<dom.W[i][j][4];
+			if (dom.nvar==8) {
+				Wdata<<setw(width)<<dom.W[i][j][5]<<setw(width)<<dom.W[i][j][6]<<setw(width)<<dom.W[i][j][7];
+			}
+			Wdata<<endl;
+		}
+	}
+	Wdata.close();
+}
+
+void save4MATLAB(meshblock &dom) {
 	real intm=0.0;
 
 	ofstream Wden;
@@ -87,7 +116,7 @@ void savedata(meshblock &dom) {
 }
 
 
-void savearray(meshblock dom,real*** array, string arrname) {
+void savearray(meshblock &dom,real*** array, string arrname) {
 
 	string ARRname="savefile/"+arrname;	
 	real intm;

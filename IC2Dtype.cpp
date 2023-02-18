@@ -26,9 +26,9 @@ void IC2Dtype(meshblock &dom) {
 		cout<<"Shock-bubble interaction problem:"<<endl;
 		cout<<"When a Mach 6 shock wave in air impacts on a cylindrical Helium bubble. Note that air & Helium are treated as the same ideal gas fluid for simplicity."<<endl;
 		if (dom.nx==dom.ny) {
-			cout<<"Error domain size!"<<endl;
-			throw exception();
-		}
+                        cout<<"Error domain size!"<<endl;
+                        throw exception();
+                }
 		tEnd=0.15;
 		pinit={1,41.83,1,0};
 		rinit={1,5.268,0.138,0};
@@ -94,7 +94,7 @@ void IC2Dtype(meshblock &dom) {
 				}
 			}
 		}
-	} else { // When I start at i=1, skip i=0 which is BC
+	} else { 
 		for (int i=1; i<dom.nx-1; i++) {
 			x=i*dom.dx;			
 			for (int j=1; j<dom.ny-1; j++) {

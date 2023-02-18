@@ -39,7 +39,9 @@ class meshblock {
 		real dx, dy, dt;
 		real speed, c;
 		real ca, cax, cay, cfx, cfy, beta; // When there is M-field
-		int count;	
+		int count;
+		// For post-processing
+		string fname;	
 		
 	void setSize(int no_x, int no_y, int no_v, real lenx, real leny);
 	void setParam (real gammaa, real tEnd0);
@@ -53,5 +55,7 @@ class meshblock {
 
 
 // All functions
+#define MIN(a, b) ((a)<(b) ? (a):(b))
+#define MAX(a, b) ((a)>(b) ? (a):(b))
 #define MAG(x,y,z) (x*x+y*y+z*z)
 #define SQR(x) (x*x)

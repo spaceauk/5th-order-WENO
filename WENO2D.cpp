@@ -1,14 +1,18 @@
 
 #include "defs.hpp"
 
-void WENOflux(real*** Q,real gamma,string direc,real dd,int nx,int ny,int nvar,real*** res);
+void WENOflux(string FSM,real*** Q,real gamma,string direc,real dd,int nx,int ny,int nvar,real*** res);
+void savearray(meshblock &dom,real*** array, string arrname);
+
+// Selection of flux-splitting methods
+void GLF(real &FL,real &FR,real flux4L,real Q4L,real lambda,real flux4R,real Q4R);
 
 void WENO2D (meshblock &dom, real*** Q) {
 
 	real resx[dom.nx][dom.ny][dom.nvar];
 
 	// Compute residuals x-direction
-	WENOflux(Q,dom.gamma,"x",dom.dx,dom.nx,dom.ny,dom.nvar,dom.res);
+	WENOflux(dom.limiter,Q,dom.gamma,"x",dom.dx,dom.nx,dom.ny,dom.nvar,dom.res);
 	for (int i=0; i<dom.nx; i++) {
 		for (int j=0; j<dom.ny; j++) {
 			for (int k=0; k<dom.nvar; k++) {
@@ -18,7 +22,7 @@ void WENO2D (meshblock &dom, real*** Q) {
 	}
 
 	// Compute residuals y-direction
-	WENOflux(Q,dom.gamma,"y",dom.dy,dom.nx,dom.ny,dom.nvar,dom.res);
+	WENOflux(dom.limiter,Q,dom.gamma,"y",dom.dy,dom.nx,dom.ny,dom.nvar,dom.res);
 	for (int i=0; i<dom.nx; i++) {
 		for (int j=0; j<dom.ny; j++) {
 			for (int k=0; k<dom.nvar; k++) {
@@ -29,7 +33,7 @@ void WENO2D (meshblock &dom, real*** Q) {
 
 }
 
-void WENOflux(real*** Q,real gamma,string direc,real dd,int nx,int ny,int nvar,real*** res){
+void WENOflux(string FSM,real*** Q,real gamma,string direc,real dd,int nx,int ny,int nvar,real*** res){
 	real r,u,v,w,Bx=0.,By=0.,Bz=0.,p,pt,H;
 	real vn,Bn=0.;
 	real normx,normy;
@@ -91,7 +95,6 @@ void WENOflux(real*** Q,real gamma,string direc,real dd,int nx,int ny,int nvar,r
 	for (int i=0; i<nx; i++) {
 		for (int j=0; j<ny; j++) {
 			for (int k=0; k<nvar; k++) {
-				FR[i][j][k]=0.5*(flux[i][j][k]+lambda*Q[i][j][k]);
 				if (direc=="x"){ // Shift
 					ii=i+1; jj=j;
 					if (ii>=nx) { ii=ii-(nx-1);}
@@ -99,7 +102,13 @@ void WENOflux(real*** Q,real gamma,string direc,real dd,int nx,int ny,int nvar,r
 					ii=i; jj=j+1;
 					if (jj>=ny) { jj=jj-(ny-1);}
 				}
-				FL[i][j][k]=0.5*(flux[ii][jj][k]-lambda*Q[ii][jj][k]);
+				if (FSM=="GLF") {
+					GLF(FL[i][j][k],FR[i][j][k],
+					   flux[ii][jj][k],Q[ii][jj][k],lambda,flux[i][j][k],Q[i][j][k]);
+				} else {
+					cout<<"Invalid flux-splitting method chosen:"<<FSM<<endl;
+					throw exception();
+				}
 			}
 		}
 	}
@@ -216,3 +225,6 @@ void WENOflux(real*** Q,real gamma,string direc,real dd,int nx,int ny,int nvar,r
 	}
 
 }
+
+
+

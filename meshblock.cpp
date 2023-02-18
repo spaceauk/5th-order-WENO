@@ -104,7 +104,7 @@ void meshblock::U2W(string loc) {
 				W[i][j][4]=W[i][j][4]-(gamma-1)*(0.5*MAG(U[i][j][5],U[i][j][6],U[i][j][7]));
 			}
 			// Check for negative pressure
-			if (W[i][j][4]<0 and i!=0 and j!=0) {
+			if (W[i][j][4]<0 and i!=0 and i!=nx-1 and j!=0 and j!=ny-1) {
 				cout<<"Error as negative pressure! P="<<W[i][j][4]<<" at i="<<i<<" & j="<<j<<". \n";
 				cout<<"U2W in function: "<<loc<<" at loop count="<<count<<endl;
 				throw exception();
@@ -128,7 +128,7 @@ void meshblock::Us2W(string loc) {
 				W[i][j][4]=W[i][j][4]-(gamma-1)*(0.5*MAG(Us[i][j][5],Us[i][j][6],Us[i][j][7]));
 			}
 			// Check for negative pressure
-			if (W[i][j][4]<0 and i!=0 and j!=0) {
+			if (W[i][j][4]<0 and i!=0 and i!=nx-1 and j!=0 and j!=ny-1) {
 				cout<<"Error as negative pressure! P="<<W[i][j][4]<<" at i="<<i<<" & j="<<j<<". \n";
 				cout<<"Us2W in function: "<<loc<<" at loop count="<<count<<endl;
 				throw exception();

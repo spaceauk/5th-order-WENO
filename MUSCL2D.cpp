@@ -3,10 +3,9 @@
 #include <exception>
 #include "defs.hpp"
 
-void slopelimiter(meshblock &dom);
 void celledges(meshblock &dom);
 void riemannS(string fluxMth,vector<real> wL,vector<real> wR,real gamma,char direc,vector<real> &flux);
-void savearray(meshblock dom, real*** array, string arrname);
+void savearray(meshblock &dom, real*** array, string arrname);
 
 void MUSCL2D(meshblock &dom, int step) {
 	// Convert U to W
@@ -18,8 +17,7 @@ void MUSCL2D(meshblock &dom, int step) {
 	dom.setBCs();
 
 	// Apply slope limiter
-	slopelimiter(dom);	
-	celledges(dom);	
+	celledges(dom);
 
 	// Constrained transport method	
 	// if (dom.nvar==8) {}
@@ -67,7 +65,7 @@ void MUSCL2D(meshblock &dom, int step) {
 				dom.res[i][j-1][k]=dom.res[i][j-1][k]+flux[k]/dom.dy;
 				dom.res[i][j][k]=dom.res[i][j][k]-flux[k]/dom.dy;
 			if (isnan(flux[k])) {
-				cout<<"At Y: i="<<i<<" j="<<j<<" k="<<k<<":"<<flux[k]<<endl;
+				cout<<"At Y: i="<<i<<" j="<<j<<" k="<<k<<":"<<flux[k]<<" dwdy="<<dom.dwdy[i][j][k]<<" "<<wL[k]<<" "<<wR[k]<<endl;
 				throw exception();
 			}
 			}
