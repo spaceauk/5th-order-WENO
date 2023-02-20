@@ -89,7 +89,7 @@ int main() {
 	int count=0, simu_count=0; dom.count=count;
 	real lambda1=0, lambda2=0, lambda3=0, lambda4=0, lambda;
 	real t=0.0, dt=0.0; 
-	while (t<dom.tEnd and count<1000) {
+	while (t<dom.tEnd) {
 		// RK2 1st step: update Us
 		if (dom.fluxMth=="WENO") {
 			WENO2D(dom,dom.U);
