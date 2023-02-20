@@ -68,7 +68,14 @@ int main() {
 	        ssx<<nx; string n_x=ssx.str();
 	        ssy<<ny; string n_y=ssy.str();
 	        string plot_var;
-	        cout<<"0) Density; 1) u; 2) v; 3) w; 4) P; 5) Bx; 6) By; 7) Bz;"<<endl;
+		cout<<"0) Density; 1) u; 2) v; 3) w; 4) P; ";
+	        if (dom.nvar==8) {
+        	        cout<<"5) Bx; 6) By; 7) Bz;"<<endl;
+	        } else if (dom.vis) {
+        	        cout<<"5) T;"<<endl;
+	        } else {
+        	        cout<<endl;
+	        }
 	        cout<<"Choose variables for plotting: ";cin>>plot_var;
 	        string command="python3 call_plot.py "+n_x+" "+ n_y+" "+plot_var+" "+dom.IC;
 	        system(command.c_str());

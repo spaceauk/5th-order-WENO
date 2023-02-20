@@ -28,10 +28,13 @@ def choose_plotvar(x):
             4:'Pressure',
             5:'Bx',
             6:'By',
-            7:'Bz'
+            7:'Bz',
             }.get(x,'Unknown')
 
-pvar=choose_plotvar(plotvar)
+if plotvar==5 and ICtype=="VST":
+    pvar='T'
+else:
+    pvar=choose_plotvar(plotvar)
 
 frame_no=0
 for fil_name in allfiles_sorted:
@@ -50,6 +53,7 @@ for fil_name in allfiles_sorted:
     plt.colorbar()
     plt.savefig(plot_path + ICtype + '_' + pvar + str(frame_no).zfill(3)+'.png')
     plt.clf()
+    plt.gca().set_aspect("equal")
     frame_no=frame_no+1
     if (frame_no % 10==0):
         sys.stdout.write('\rPlotting file at '+str(frame_no)+'/'+str( len(allfiles)))
