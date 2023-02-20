@@ -52,6 +52,12 @@ int main() {
 		throw exception();
 	}
 
+	// Toggle viscous effects (only for hydro)
+        if (dom.nvar==5) {
+                cout<<"Select options: (0) Inviscid (1) Viscous effects"<<endl;
+                cin>>dom.vis;
+        }
+
 	// Use existing data or not
 	int choice;
 	cout<<"For plotting, ";

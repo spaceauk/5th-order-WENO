@@ -17,12 +17,15 @@ void save4py(meshblock &dom, int id, real t) {
 	for (int j=1; j<dom.ny-1; j++) {
 		for (int i=1; i<dom.nx-1; i++) {
 			real x=dom.dx*i, y=dom.dy*j;
-			// x,y,r,u,v,w,p, (can add T when viscous flux added)
+			// x,y,r,u,v,w,p 
 			Wdata<<setw(width)<<x<<setw(width)<<y<<
 				setw(width)<<dom.W[i][j][0]<<
 				setw(width)<<dom.W[i][j][1]<<setw(width)<<dom.W[i][j][2]<<setw(width)<<dom.W[i][j][3]<<
 				setw(width)<<dom.W[i][j][4];
-			if (dom.nvar==8) {
+			if (dom.vis) { // Temperature field
+				Wdata<<setw(width)<<dom.W[i][j][4]/dom.W[i][j][0];
+			}
+			if (dom.nvar==8) { // Magnetic field (Bx,By,Bz)
 				Wdata<<setw(width)<<dom.W[i][j][5]<<setw(width)<<dom.W[i][j][6]<<setw(width)<<dom.W[i][j][7];
 			}
 			Wdata<<endl;

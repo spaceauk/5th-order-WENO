@@ -1,7 +1,8 @@
 
 #include "defs.hpp"
 
-void WENOflux(string FSM,real*** Q,real gamma,string direc,real dd,int nx,int ny,int nvar,real*** res);
+void WENOflux(meshblock &dom,real*** Q,real gamma,string direc,real dd);
+void viscousflux(meshblock &dom,int i,int j,real tau_xx,real tau_yy,real tau_xy,real q_x,real q_y);
 void savearray(meshblock &dom,real*** array, string arrname);
 
 // Selection of flux-splitting methods
@@ -12,7 +13,7 @@ void WENO2D (meshblock &dom, real*** Q) {
 	real resx[dom.nx][dom.ny][dom.nvar];
 
 	// Compute residuals x-direction
-	WENOflux(dom.limiter,Q,dom.gamma,"x",dom.dx,dom.nx,dom.ny,dom.nvar,dom.res);
+	WENOflux(dom,Q,dom.gamma,"x",dom.dx);
 	for (int i=0; i<dom.nx; i++) {
 		for (int j=0; j<dom.ny; j++) {
 			for (int k=0; k<dom.nvar; k++) {
@@ -22,7 +23,7 @@ void WENO2D (meshblock &dom, real*** Q) {
 	}
 
 	// Compute residuals y-direction
-	WENOflux(dom.limiter,Q,dom.gamma,"y",dom.dy,dom.nx,dom.ny,dom.nvar,dom.res);
+	WENOflux(dom,Q,dom.gamma,"y",dom.dy);
 	for (int i=0; i<dom.nx; i++) {
 		for (int j=0; j<dom.ny; j++) {
 			for (int k=0; k<dom.nvar; k++) {
@@ -33,7 +34,7 @@ void WENO2D (meshblock &dom, real*** Q) {
 
 }
 
-void WENOflux(string FSM,real*** Q,real gamma,string direc,real dd,int nx,int ny,int nvar,real*** res){
+void WENOflux(meshblock &dom,real*** Q,real gamma,string direc,real dd){
 	real r,u,v,w,Bx=0.,By=0.,Bz=0.,p,pt,H;
 	real vn,Bn=0.;
 	real normx,normy;
@@ -45,17 +46,17 @@ void WENOflux(string FSM,real*** Q,real gamma,string direc,real dd,int nx,int ny
 	}
 
 	// Compute flux from conservative vectors
-	real flux[nx][ny][nvar];
+	real flux[dom.nx][dom.ny][dom.nvar];
 	real lambda=0;
-	for (int i=0; i<nx; i++) {
-                for (int j=0; j<ny; j++) {
+	for (int i=0; i<dom.nx; i++) {
+                for (int j=0; j<dom.ny; j++) {
                 	r = Q[i][j][0];
 			u = Q[i][j][1]/r;
 			v = Q[i][j][2]/r;
 			w = Q[i][j][3]/r;
 			vn = u*normx + v*normy;
-			p=(gamma-1)*(Q[i][j][4]-0.5*r*MAG(u,v,w));
-                        if (nvar==8) {
+			p = (gamma-1)*(Q[i][j][4]-0.5*r*MAG(u,v,w));
+                        if (dom.nvar==8) {
                                 Bx=Q[i][j][5];
                                 By=Q[i][j][6];
                                 Bz=Q[i][j][7];
@@ -69,7 +70,8 @@ void WENOflux(string FSM,real*** Q,real gamma,string direc,real dd,int nx,int ny
 			flux[i][j][2]=r*vn*v + pt*normy;
 			flux[i][j][3]=r*vn*w + pt*0;
                         flux[i][j][4]=r*vn*H;
-			if (nvar==8) {
+			// Include magnetic field effects if MHD
+			if (dom.nvar==8) {
 				flux[i][j][5]=(vn*Bx-Bn*u);
 				flux[i][j][6]=(vn*By-Bn*v);
 				flux[i][j][7]=(vn*Bz-Bn*w);
@@ -78,6 +80,16 @@ void WENOflux(string FSM,real*** Q,real gamma,string direc,real dd,int nx,int ny
 				flux[i][j][2]=flux[i][j][2]-Bn*By;
 				flux[i][j][3]=flux[i][j][3]-Bn*Bz;
 				flux[i][j][4]=flux[i][j][4]-Bn*(u*Bx+v*By+w*Bz);
+			}
+			// Include viscous effects (note only for hydro)
+			if (dom.vis) {
+				if (i!=0 and j!=0 and i!=dom.nx-1 and j!=dom.ny-1) { // No viscous effects at ghost B.C.s
+					real tau_xx,tau_yy,tau_xy,q_x,q_y;
+					viscousflux(dom,i,j,tau_xx,tau_yy,tau_xy,q_x,q_y);
+					flux[i][j][1]-=tau_xx*normx + tau_xy*normy;
+					flux[i][j][2]-=tau_xy*normx + tau_yy*normy;
+					flux[i][j][4]-=(u*tau_xx+v*tau_xy+q_x)*normx + (u*tau_xy+v*tau_yy+q_y)*normy;
+				}
 			}
 			a = sqrt(gamma*p/r); // sound speed
 			ca=sqrt(MAG(Bx,By,Bz)/r); // Alfven waves
@@ -91,22 +103,22 @@ void WENOflux(string FSM,real*** Q,real gamma,string direc,real dd,int nx,int ny
 
 	// For flux splitting, use global Lax-Friedrichs flux splitting
 	int ii,jj;
-	real FL[nx][ny][nvar], FR[nx][ny][nvar];
-	for (int i=0; i<nx; i++) {
-		for (int j=0; j<ny; j++) {
-			for (int k=0; k<nvar; k++) {
+	real FL[dom.nx][dom.ny][dom.nvar], FR[dom.nx][dom.ny][dom.nvar];
+	for (int i=0; i<dom.nx; i++) {
+		for (int j=0; j<dom.ny; j++) {
+			for (int k=0; k<dom.nvar; k++) {
 				if (direc=="x"){ // Shift
 					ii=i+1; jj=j;
-					if (ii>=nx) { ii=ii-(nx-1);}
+					if (ii>=dom.nx) { ii=ii-(dom.nx-1);}
 				} else if (direc=="y"){
 					ii=i; jj=j+1;
-					if (jj>=ny) { jj=jj-(ny-1);}
+					if (jj>=dom.ny) { jj=jj-(dom.ny-1);}
 				}
-				if (FSM=="GLF") {
+				if (dom.limiter=="GLF") {
 					GLF(FL[i][j][k],FR[i][j][k],
 					   flux[ii][jj][k],Q[ii][jj][k],lambda,flux[i][j][k],Q[i][j][k]);
 				} else {
-					cout<<"Invalid flux-splitting method chosen:"<<FSM<<endl;
+					cout<<"Invalid flux-splitting method chosen:"<<dom.limiter<<endl;
 					throw exception();
 				}
 			}
@@ -115,21 +127,21 @@ void WENOflux(string FSM,real*** Q,real gamma,string direc,real dd,int nx,int ny
 	
 	// Shift fluxes and calculate fluxes on left & right
 	int iii,jjj;
-	real FluxL[nx][ny][nvar],FluxR[nx][ny][nvar];
-	for (int i=0; i<nx; i++) {
-                for (int j=0; j<ny; j++) {
-                        for (int k=0; k<nvar; k++) {
+	real FluxL[dom.nx][dom.ny][dom.nvar],FluxR[dom.nx][dom.ny][dom.nvar];
+	for (int i=0; i<dom.nx; i++) {
+                for (int j=0; j<dom.ny; j++) {
+                        for (int k=0; k<dom.nvar; k++) {
 				// Shift Forward
                                 if (direc=="x"){
                                         ii=i+1; jj=j;
-                                        if (ii>=nx) { ii=ii-(nx-1);}
+                                        if (ii>=dom.nx) { ii=ii-(dom.nx-1);}
 			                iii=i+2; jjj=j;
-                                        if (iii>=nx) { iii=iii-(nx-1);}
+                                        if (iii>=dom.nx) { iii=iii-(dom.nx-1);}
                                 } else if (direc=="y"){
                                         ii=i; jj=j+1;
-                                        if (jj>=ny) { jj=jj-(ny-1);}
+                                        if (jj>=dom.ny) { jj=jj-(dom.ny-1);}
                                         iii=i; jjj=j+2;
-                                        if (jjj>=ny) { jjj=jjj-(ny-1);}
+                                        if (jjj>=dom.ny) { jjj=jjj-(dom.ny-1);}
                                 }
                                 real FLp=FL[ii][jj][k];
 				real FLpp=FL[iii][jjj][k];
@@ -139,14 +151,14 @@ void WENOflux(string FSM,real*** Q,real gamma,string direc,real dd,int nx,int ny
 				// Shift Backwards
                                 if (direc=="x"){
                                         ii=i-1; jj=j;
-                                        if (ii<0) { ii=ii+(nx-1);}
+                                        if (ii<0) { ii=ii+(dom.nx-1);}
 			                iii=i-2; jjj=j;
-                                        if (iii<0) { iii=iii+(nx-1);}
+                                        if (iii<0) { iii=iii+(dom.nx-1);}
                                 } else if (direc=="y"){
                                         ii=i; jj=j-1;
-                                        if (jj<0) { jj=jj+(ny-1);}
+                                        if (jj<0) { jj=jj+(dom.ny-1);}
                                         iii=i; jjj=j-2;
-                                        if (jjj<0) { jjj=jjj+(ny-1);}
+                                        if (jjj<0) { jjj=jjj+(dom.ny-1);}
                                 }
                                 real FLm=FL[ii][jj][k];
 				real FLmm=FL[iii][jjj][k];
@@ -209,17 +221,17 @@ void WENOflux(string FSM,real*** Q,real gamma,string direc,real dd,int nx,int ny
         }
 
 	// Obtain FVM residual term, df/dx
-	for (int i=1; i<nx-1; i++) {
-		for (int j=1; j<ny-1; j++) {
-			for (int k=0; k<nvar; k++) {
+	for (int i=1; i<dom.nx-1; i++) {
+		for (int j=1; j<dom.ny-1; j++) {
+			for (int k=0; k<dom.nvar; k++) {
 				if (direc=="x"){ // Shift
                                         ii=i-1; jj=j;
-                                        if (ii<0) { ii=ii+(nx-1);}
+                                        if (ii<0) { ii=ii+(dom.nx-1);}
                                 } else if (direc=="y"){
                                         ii=i; jj=j-1;
-                                        if (jj<0) { jj=jj+(ny-1);}
+                                        if (jj<0) { jj=jj+(dom.ny-1);}
                                 }
-				res[i][j][k]=(FluxL[i][j][k]-FluxL[ii][jj][k] + FluxR[i][j][k]-FluxR[ii][jj][k])/dd;
+				dom.res[i][j][k]=(FluxL[i][j][k]-FluxL[ii][jj][k] + FluxR[i][j][k]-FluxR[ii][jj][k])/dd;
 			}
 		}
 	}

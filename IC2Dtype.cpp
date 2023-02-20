@@ -35,6 +35,21 @@ void IC2Dtype(meshblock &dom) {
 		uinit={-3,2.752,-3,0};		
 		gamma=1.4;
 
+	} else if (dom.IC=="VST" and dom.nvar==5 and dom.vis) {
+		cout<<"2D viscous shock tube."<<endl;
+		gamma=1.4;
+		tEnd=1;
+		real p_ref=101325;
+		real rho_ref=1.225;
+		real T_ref=p_ref/(rho_ref*R);
+		real cp=gamma*R/(gamma-1);
+		real cv=cp-gamma;
+		dom.Re=200.;
+		dom.Pr=0.72;
+		dom.Suth=110.4/T_ref;
+		pinit={1.2/gamma,120./gamma,120./gamma,1.2/gamma};
+		rinit={1.2,120.,120.,1.2};		
+
 	} else if (dom.IC=="BWx" and dom.nvar==8) {
 		cout<<"2D Brio & Wu shocktube config along x."<<endl;
 		tEnd=0.2;

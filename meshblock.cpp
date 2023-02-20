@@ -65,7 +65,8 @@ void meshblock::setType(string IC, string limiter, string fluxMth) {
 
 // Apply B.C.s
 void meshblock::setBCs() {
-
+	
+	// Symmetry B.C.s
 	for (int k=0; k<nvar; k++) {				
 		for (int i=0; i<nx; i++) {
 			Us[i][0][k]=Us[i][1][k];
@@ -83,8 +84,55 @@ void meshblock::setBCs() {
 			U[0][j][k]=U[1][j][k];
 			W[0][j][k]=W[1][j][k];
 		}
-
 	}
+
+	// No-slip 
+	if (IC=="VST") {
+		// Bottom wall
+		for (int i=0; i<nx; i++) { 
+                        Us[i][0][1]=0.; Us[i][0][2]=0.;
+                        U[i][0][1]=0.; U[i][0][2]=0.;
+                        W[i][0][1]=0.; W[i][0][2]=0.;
+                }
+		// Side walls
+                for (int j=0; j<ny; j++) {
+			// Left wall
+                        Us[0][j][1]=0.; Us[0][j][2]=0.;
+                        U[0][j][1]=0.; U[0][j][2]=0.;
+                        W[0][j][1]=0.; W[0][j][2]=0.;
+			// Right wall
+			Us[nx-1][j][1]=0.; Us[nx-1][j][2]=0.;
+                        U[nx-1][j][1]=0.; U[nx-1][j][2]=0.;
+                        W[nx-1][j][1]=0.; W[nx-1][j][2]=0.;
+                }
+	}
+
+	// Adiabatic
+	if (IC=="VST"){
+		// Bottom wall
+		for (int i=0; i<nx; i++) {
+			W[i][0][4]=(W[i][1][4]/W[i][1][0])*W[i][0][0];
+			U[i][0][4]=(W[i][0][4]/(gamma-1))+0.5*W[i][0][0]*
+                                   MAG(W[i][0][1],W[i][0][2],W[i][0][3]);
+			if (nvar==8) {
+				U[i][0][4]=U[i][0][4]+0.5*MAG(W[i][0][5],W[i][0][6],W[i][0][7]);
+			}
+			Us[i][0][4]=U[i][0][4];
+		}
+		// Side walls
+		for (int j=0; j<ny; j++) {
+                        W[0][j][4]=(W[1][j][4]/W[1][j][0])*W[0][j][0];
+                        U[0][j][4]=(W[0][j][4]/(gamma-1))+0.5*W[0][j][0]*MAG(W[0][j][1],W[0][j][2],W[0][j][3]);
+			W[nx-1][j][4]=(W[nx-2][j][4]/W[nx-2][j][0])*W[nx-1][j][0];
+                        U[nx-1][j][4]=(W[nx-1][j][4]/(gamma-1))+0.5*W[nx-1][j][0]*MAG(W[nx-1][j][1],W[nx-1][j][2],W[nx-1][j][3]);
+                        if (nvar==8) {
+                                U[0][j][4]=U[0][j][4]+0.5*MAG(W[0][j][5],W[0][j][6],W[0][j][7]);
+				U[nx-1][j][4]=U[nx-1][j][4]+0.5*MAG(W[nx-1][j][5],W[nx-1][j][6],W[nx-1][j][7]);
+                        }
+                        Us[0][j][4]=U[0][j][4];
+			Us[nx-1][j][4]=U[nx-1][j][4];
+                }
+	}	
 }
 
 // Conversion between U & W

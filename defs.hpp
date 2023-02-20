@@ -9,6 +9,7 @@ using namespace std;
 using real = float;
 #define eps 1.0E-6
 #define pi 3.14159265359
+#define R 287.0 // Gas constant for air
 
 
 // Forward declarations needed for class files
@@ -18,6 +19,10 @@ class meshblock {
 		// Fluid Properties
 		real gamma;
 		real tEnd;
+		// Include viscous effects
+		bool vis;
+		real Pr, Re;
+		real Suth;
 		// Related arrays
 		real*** U; // Conservative variables
 		real*** Us;
