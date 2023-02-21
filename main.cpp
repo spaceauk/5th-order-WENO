@@ -56,7 +56,6 @@ int main() {
         if (dom.nvar==5) {
                 cout<<"Select options: (0) Inviscid (1) Viscous effects"<<endl;
                 cin>>dom.vis;
-		cout<<"YH check:"<<dom.vis<<endl;
         }
 
 	// Use existing data or not
