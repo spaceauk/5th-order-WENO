@@ -3,6 +3,7 @@
 - Hydrodynamic or Magnetohydrodynamic (MHD) solver. 
 - Make use of dynamic memory management to minimize the amount of memory required.
 - Second-order accurate Runge-Kutta time evolution
+- Viscous effects up to 4th-order accuracy
 
 1. 1st-order Godunov
 2. 2nd-order Monotonized Central (MC) 
@@ -11,7 +12,10 @@
 
 Example simulation on shock-bubble interaction (400 by 200) using 5th-order WENO with symmetry boundary condition: <br />
 https://www.youtube.com/watch?v=HPZ6TjSnV1I&t=1s&ab_channel=Spaceduck496 <br />
-At t=0.15s,
+(a) For inviscid flow at t=0.15s,
 ![den_n_p](https://user-images.githubusercontent.com/64028216/216842603-724e618c-1cf5-49af-851f-1bd4fae4223e.png)
 ![vel](https://user-images.githubusercontent.com/64028216/216842635-2e14e490-845e-483b-a142-1c99c492d6bc.png)
+
+(b) For viscous flow at t=1.0s, the temperature field for viscous shock tube is,
+
 
