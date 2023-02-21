@@ -17,5 +17,6 @@ https://www.youtube.com/watch?v=HPZ6TjSnV1I&t=1s&ab_channel=Spaceduck496 <br />
 ![vel](https://user-images.githubusercontent.com/64028216/216842635-2e14e490-845e-483b-a142-1c99c492d6bc.png)
 
 (b) For viscous flow at t=1.0s, the temperature field for viscous shock tube is,
+![Screenshot from 2023-02-20 15-34-48](https://user-images.githubusercontent.com/64028216/220245447-f0ca847b-8a9e-4c2a-8019-362514f03d8a.png)
 
 
