@@ -4,10 +4,10 @@
 EXEC=main.x
 
 # Path to simulation executable
-EXEC_PATH=/home/spaceghoul/Desktop/Spring2023/AE6042/MHD_MUSCL_n_WENO
+EXEC_PATH=/home/
 
 # Path to output file
-OUTPUT=/home/spaceghoul/Desktop/Spring2023/AE6042/MHD_MUSCL_n_WENO/stdout
+OUTPUT=/home/stdout
 
 # Set time interval (s) between system resource checks
 t_interval=10
