@@ -1,7 +1,6 @@
 # High-resolution schemes
 - Contain both 5th-order-WENO (Weighted Essentially Non-Oscillatory) and MUSCL (Monotonic Upstream-centered Scheme for Conservation Laws) schemes
 - Hydrodynamic or Magnetohydrodynamic (MHD) solver. 
-- Make use of dynamic memory management to minimize the amount of memory required.
 - Second-order accurate Runge-Kutta time evolution
 - Viscous effects up to 4th-order accuracy
 
