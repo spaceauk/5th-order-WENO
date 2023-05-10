@@ -2,7 +2,7 @@
 #include "defs.hpp"
 
 void WENOflux(meshblock &dom,real*** Q,real gamma,string direc,real dd);
-void viscousflux(meshblock &dom,int i,int j,real tau_xx,real tau_yy,real tau_xy,real q_x,real q_y);
+void viscousflux(meshblock &dom,int i,int j,real &tau_xx,real &tau_yy,real &tau_xy,real &q_x,real &q_y);
 void savearray(meshblock &dom,real*** array, string arrname);
 
 // Selection of flux-splitting methods

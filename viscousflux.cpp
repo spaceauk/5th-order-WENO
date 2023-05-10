@@ -3,8 +3,8 @@
 void firstderiV(real delta,real intm[5][3],real derV[3]);
 
 void viscousflux(meshblock &dom,int i, int j,
-		real tau_xx,real tau_yy,real tau_xy,real q_x,real q_y) {
-	real k=dom.gamma/((dom.gamma-1.)*dom.Pr*dom.Re); // Thermal conductivity
+		real &tau_xx,real &tau_yy,real &tau_xy,real &q_x,real &q_y) {
+	real k_suth=dom.gamma/((dom.gamma-1.)*dom.Pr*dom.Re); // Thermal conductivity
 	// Temperature for viscosity
 	real T=dom.W[i][j][4]/dom.W[i][j][0]; 
 	// Sutherland viscosity
@@ -53,8 +53,8 @@ void viscousflux(meshblock &dom,int i, int j,
 	// Shear stress rate
 	tau_xy=(mu*(u_y+v_x))/dom.Re;
 	// Heat transfer rate due to Fourier's laws of conduction
-	q_x=k*T_x;
-	q_y=k*T_y;
+	q_x=k_suth*T_x;
+	q_y=k_suth*T_y;
 }
 
 // First spatial derivative ()
