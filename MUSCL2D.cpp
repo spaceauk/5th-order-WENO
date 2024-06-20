@@ -1,119 +1,126 @@
 #include <vector>
 #include <cmath>
 #include <exception>
+#include<iomanip>
 #include "defs.hpp"
 
-void celledges(meshblock &dom);
+void celledges(meshblock &dom,int nb,int step);
 void riemannS(string fluxMth,vector<real> wL,vector<real> wR,real gamma,char direc,vector<real> &flux);
 void savearray(meshblock &dom, real*** array, string arrname);
+void WENO2D_3rd(meshblock &dom,string direc,int nb);
+void WENO2D_5th(meshblock &dom,string direc,int nb);
 
-void MUSCL2D(meshblock &dom, int step) {
+void MUSCL2D(meshblock &dom, int nb, int step) {
 	// Convert U to W
 	if (step==1) {
-		dom.U2W("MUSCL");
+		dom.U2W("MUSCL",nb);
 	} else if (step==2) {
-		dom.Us2W("MUSCL");
+		dom.Us2W("MUSCL",nb);
 	}
-	dom.setBCs();
 
-	// Apply slope limiter
-	celledges(dom);
+	if (dom.limiter=="WENO3") {
+		WENO2D_3rd(dom,"x",nb);
+		WENO2D_3rd(dom,"y",nb);
+	} else if (dom.limiter=="WENO5") { 
+		// Note that this directional splitting of WENO is 2nd order accurate, thus more robust method is required.
+		WENO2D_5th(dom,"x",nb);
+		WENO2D_5th(dom,"y",nb);
+	} else {
+		// Apply slope limiter
+		celledges(dom,nb,step);
+	}
 
-	// Constrained transport method	
-	// if (dom.nvar==8) {}
-	
-	// Compute residuals
-	vector<real> wL(dom.nvar),wR(dom.nvar),flux(dom.nvar); 
-	for (int i=0; i<dom.nx; i++) {
-		for (int j=0; j<dom.ny; j++) {
-			for (int k=0; k<dom.nvar; k++) {
-				dom.res[i][j][k]=0;
+	if (CT_mtd) {
+		for (int i=0; i<dom.nx-1; i++) { 
+                	for (int j=0; j<dom.ny-1; j++) {
+                        	// Constrained transport method: Assumed magnetic field indices from 5 to 7
+                                dom.wxL[i][j][5]= step==1 ? dom.Bi[i+1][j][0][nb] : dom.Bis[i+1][j][0][nb];
+                                dom.wxR[i][j][5]= step==1 ? dom.Bi[i][j][0][nb] : dom.Bis[i][j][0][nb];
+				dom.wyL[i][j][6]= step==1 ? dom.Bi[i][j+1][1][nb] : dom.Bis[i][j+1][1][nb];
+                                dom.wyR[i][j][6]= step==1 ? dom.Bi[i][j][1][nb] : dom.Bis[i][j][1][nb];
 			}
 		}
 	}
-	// (a) In x-direction
-	for (int i=2; i<dom.nx-1; i++) {
-		for (int j=1; j<dom.ny-1; j++) {
+                                                                    
+
+	for (int i=0;i<dom.nx;i++) {
+		for (int j=0;j<dom.ny;j++) {
+			for (int k=0;k<dom.nvar;k++) {
+				dom.ff[i][j][k][nb]=0.; dom.gg[i][j][k][nb]=0.;
+			}
+		}
+	}
+
+	vector<real> wL(8),wR(8),flux(8);
+	for (int i=dom.nxminb; i<=dom.nxmax; i++) {
+		for (int j=dom.nyminb; j<=dom.nymax; j++) {
+			int ip=i+1;
+			int jp=j+1;
+			// (a) In x-direction-----------------------------------------------------------------------
 			for (int k=0; k<dom.nvar; k++) {
-				wL[k]=dom.wxL[i-1][j][k];
-				wR[k]=dom.wxR[i][j][k];
+				wL[k]=dom.wxL[i][j][k];
+				wR[k]=dom.wxR[ip][j][k];
+			}
+			if (wL[4]<0) {
+				cout<<"Negative pressure at i="<<i<<", j="<<j<<", nb="<<nb<<endl;
+				cout<<"pL="<<wL[4]<<", pR="<<wR[4]<<endl;
+				throw exception();
 			}
 			// Compute flux at i+1/2
 			riemannS(dom.fluxMth,wL,wR,dom.gamma,'x',flux);
 			// Contribution to the residual of cell (i,j)	
 			for (int k=0; k<dom.nvar; k++) {
-				dom.res[i-1][j][k]=dom.res[i-1][j][k]+flux[k]/dom.dx;
-				dom.res[i][j][k]=dom.res[i][j][k]-flux[k]/dom.dx;
+				dom.ff[ip][j][k][nb]=flux[k];
 			if (isnan(flux[k])) {
-				cout<<"At X: i="<<i<<" j="<<j<<" k="<<k<<":"<<flux[k]<<" dwdx="<<dom.dwdx[i][j][k]<<endl;
+				real x=((dom.nxmin+dom.icoord[nb][0]-nghosts)+0.5)*dom.dx[dom.lp[nb][0]] - dom.dx[0];
+				real y=((dom.nymin+dom.icoord[nb][1]-nghosts)+0.5)*dom.dy[dom.lp[nb][0]] - dom.dy[0];
+				cout<<"At X: nb="<<nb<<", i="<<i<<", j="<<j<<", flux["<<k<<"]="<<flux[k]
+					<<", (x,y)=("<<x<<","<<y<<")"<<endl;
+				cout<<"inner_bounds=("<<dom.innerbounds[nb][0]<<","<<dom.innerbounds[nb][1]<<","<<
+					dom.innerbounds[nb][2]<<")"<<endl;
+				cout<<"W=("; for (int kk=0;kk<dom.nvar;kk++) {cout<<dom.W[i][j][kk][nb]<<" ";} cout<<")"<<endl;
+				cout<<"dwdx=("; for (int kk=0;kk<dom.nvar;kk++) {cout<<dom.dwdx[i][j][kk]<<" ";} cout<<")"<<endl;
+				cout<<"wL=("; for (int kk=0;kk<dom.nvar;kk++) {cout<<wL[kk]<<" ";} cout<<")"<<endl;
+				cout<<"wR=("; for (int kk=0;kk<dom.nvar;kk++) {cout<<wR[kk]<<" ";} cout<<")"<<endl;
+				cout<<"flux=("; for (int kk=0;kk<dom.nvar;kk++) {cout<<flux[kk]<<" ";} cout<<")"<<endl;	
+				throw exception(); }
+			}
+			// Ensure divergence free magnetic field
+			if (CT_mtd and wL[5]-wR[5]!=0) {
+				cout<<std::setprecision(Nprec)<<"diffBx not equal to zero! BxL="<<wL[5]<<", BxR="<<wR[5]
+					<<", at i="<<i<<", j="<<j<<", nb="<<nb<<endl;
 				throw exception();
 			}
-			}
-		}
-	}
-	// (b) In y-direction
-	for (int i=1; i<dom.nx-1; i++) {
-		for (int j=2; j<dom.ny-1; j++) {
+
+			// (b) In y-direction----------------------------------------------------------------------
 			for (int k=0; k<dom.nvar; k++) {
-				wL[k]=dom.wyL[i][j-1][k];
-				wR[k]=dom.wyR[i][j][k];
+				wL[k]=dom.wyL[i][j][k];
+				wR[k]=dom.wyR[i][jp][k];
 			}
 			// Compute flux at j+1/2
 			riemannS(dom.fluxMth,wL,wR,dom.gamma,'y',flux);
 			// Contribution to the residual of cell (i,j)
 			for (int k=0; k<dom.nvar; k++) {
-				dom.res[i][j-1][k]=dom.res[i][j-1][k]+flux[k]/dom.dy;
-				dom.res[i][j][k]=dom.res[i][j][k]-flux[k]/dom.dy;
+				dom.gg[i][jp][k][nb]=flux[k];
 			if (isnan(flux[k])) {
-				cout<<"At Y: i="<<i<<" j="<<j<<" k="<<k<<":"<<flux[k]<<" dwdy="<<dom.dwdy[i][j][k]<<" "<<wL[k]<<" "<<wR[k]<<endl;
-				throw exception();
+				real x=((dom.nxmin+dom.icoord[nb][0]-nghosts)+0.5)*dom.dx[dom.lp[nb][0]] - dom.dx[0];
+				real y=((dom.nymin+dom.icoord[nb][1]-nghosts)+0.5)*dom.dy[dom.lp[nb][0]] - dom.dy[0];
+				cout<<"At Y: nb="<<nb<<", i="<<i<<", j="<<j<<", flux["<<k<<"]="<<flux[k]
+					<<", (x,y)=("<<x<<","<<y<<")"<<endl;
+                                cout<<"inner_bounds=("<<dom.innerbounds[nb][0]<<","<<dom.innerbounds[nb][1]<<","<<
+                                        dom.innerbounds[nb][2]<<")"<<endl;
+                                cout<<"W=("; for (int kk=0;kk<dom.nvar;kk++) {cout<<dom.W[i][j][kk][nb]<<" ";} cout<<")"<<endl;
+                                cout<<"dwdx=("; for (int kk=0;kk<dom.nvar;kk++) {cout<<dom.dwdy[i][j][kk]<<" ";} cout<<")"<<endl;
+                                cout<<"wL=("; for (int kk=0;kk<dom.nvar;kk++) {cout<<wL[kk]<<" ";} cout<<")"<<endl;
+                                cout<<"wR=("; for (int kk=0;kk<dom.nvar;kk++) {cout<<wR[kk]<<" ";} cout<<")"<<endl;
+                                cout<<"flux=("; for (int kk=0;kk<dom.nvar;kk++) {cout<<flux[kk]<<" ";} cout<<")"<<endl;
+				throw exception(); }
 			}
-			}
-		}
-	}
-	// Set residual for B.C.s
-	// (a) Flux contribution of the most NORTH face: j=M-1
-	for (int i=1; i<dom.nx-1; i++) {
-		for (int k=0; k<dom.nvar; k++) {
-			wL[k]=dom.wyL[i][dom.ny-2][k];
-			wR[k]=dom.wyR[i][dom.ny-2][k];
-		}
-		riemannS(dom.fluxMth,wL,wR,dom.gamma,'y',flux);
-		for (int k=0; k<dom.nvar; k++) {
-			dom.res[i][dom.ny-2][k]=dom.res[i][dom.ny-2][k]+flux[k]/dom.dy;
-		}
-	}
-	// (b) Flux contribution of the most SOUTH face: j=2
-	for (int i=1; i<dom.nx-1; i++) {
-		for (int k=0; k<dom.nvar; k++) {
-			wL[k]=dom.wyL[i][1][k];
-			wR[k]=dom.wyR[i][1][k];
-		}
-		riemannS(dom.fluxMth,wL,wR,dom.gamma,'y',flux);
-		for (int k=0; k<dom.nvar; k++) {
-			dom.res[i][1][k]=dom.res[i][1][k]-flux[k]/dom.dy;
-		}
-	}
-	// (c) Flux contribution of the most EAST face: i=N-1
-	for (int j=1; j<dom.ny-1; j++) {
-		for (int k=0; k<dom.nvar; k++) {
-			wL[k]=dom.wxL[dom.nx-2][j][k];
-			wR[k]=dom.wxR[dom.nx-2][j][k];
-		}
-		riemannS(dom.fluxMth,wL,wR,dom.gamma,'x',flux);
-		for (int k=0; k<dom.nvar; k++) {
-			dom.res[dom.nx-2][j][k]=dom.res[dom.nx-2][j][k]+flux[k]/dom.dx;
-		}
-	}
-	// (d) Flux contribution of the most WEST face: i=2
-	for (int j=1; j<dom.ny-1; j++) {
-		for (int k=0; k<dom.nvar; k++) {
-			wL[k]=dom.wxL[1][j][k];
-			wR[k]=dom.wxR[1][j][k];
-		}
-		riemannS(dom.fluxMth,wL,wR,dom.gamma,'x',flux);
-		for (int k=0; k<dom.nvar; k++) {
-			dom.res[1][j][k]=dom.res[1][j][k]-flux[k]/dom.dx;
+                        if (CT_mtd and wL[6]-wR[6]!=0) {
+                                cout<<std::setprecision(Nprec)<<"diffBy not equal to zero! ByL="<<wL[6]<<", ByR="<<wR[6]
+                                        <<", at i="<<i<<", j="<<j<<", nb="<<nb<<endl;
+                                throw exception();
+                        }
 		}
 	}
 }

@@ -13,111 +13,37 @@ void save4py(meshblock &dom, int id, real t) {
 
 	ofstream Wdata;
 	int width=16;
-	Wdata.open(dom.fname);
-	for (int j=1; j<dom.ny-1; j++) {
-		for (int i=1; i<dom.nx-1; i++) {
-			real x=dom.dx*i, y=dom.dy*j;
+	Wdata.open(dom.fname);	
+	for (int nb=0;nb<dom.lastActive;nb++) {
+	if (dom.leafs[nb]) {
+		
+	Wdata<<"#"<<setw(width-1)<<"x"<<setw(width)<<"y"<<setw(width)<<"xdelta"<<setw(width)<<"ydelta"<<
+    	       setw(width)<<"density"<<setw(width)<<"U"<<setw(width)<<"v"<<setw(width)<<"w"<<setw(width)<<"pressure";
+        if (MAG_field) Wdata<<setw(width)<<"Bx"<<setw(width)<<"By"<<setw(width)<<"Bz";
+        Wdata<<endl;
+
+	for (int j=dom.nymin; j<=dom.nymax; j++) {
+		// Note that the x & y here are curated for my gnuplot...
+		real y=((j+dom.icoord[nb][1]-nghosts)+0.5)*dom.dy[dom.lp[nb][0]] - dom.dy[0];
+		for (int i=dom.nxmin; i<=dom.nxmax; i++) {
+			real x=((i+dom.icoord[nb][0]-nghosts)+0.5)*dom.dx[dom.lp[nb][0]] - dom.dx[0];
 			// x,y,r,u,v,w,p 
 			Wdata<<setw(width)<<x<<setw(width)<<y<<
-				setw(width)<<dom.W[i][j][0]<<
-				setw(width)<<dom.W[i][j][1]<<setw(width)<<dom.W[i][j][2]<<setw(width)<<dom.W[i][j][3]<<
-				setw(width)<<dom.W[i][j][4];
-			if (dom.vis) { // Temperature field
-				Wdata<<setw(width)<<dom.W[i][j][4]/dom.W[i][j][0];
-			}
-			if (dom.nvar==8) { // Magnetic field (Bx,By,Bz)
-				Wdata<<setw(width)<<dom.W[i][j][5]<<setw(width)<<dom.W[i][j][6]<<setw(width)<<dom.W[i][j][7];
+				setw(width)<<dom.dx[dom.lp[nb][0]]/2.<<
+				setw(width)<<dom.dy[dom.lp[nb][0]]/2.<<
+				setw(width)<<dom.W[i][j][0][nb]<<
+				setw(width)<<dom.W[i][j][1][nb]<<setw(width)<<dom.W[i][j][2][nb]<<setw(width)<<dom.W[i][j][3][nb]<<
+				setw(width)<<dom.W[i][j][4][nb];
+			if (MAG_field) { // Magnetic field (Bx,By,Bz)
+				Wdata<<setw(width)<<dom.W[i][j][5][nb]<<setw(width)<<dom.W[i][j][6][nb]<<setw(width)<<dom.W[i][j][7][nb];
 			}
 			Wdata<<endl;
 		}
 	}
+	}
+	}
 	Wdata.close();
 }
-
-void save4MATLAB(meshblock &dom) {
-	real intm=0.0;
-
-	ofstream Wden;
-	Wden.open("savefile/density");
-	for (int j=0; j<dom.ny; j++) {
-		for (int i=0; i<dom.nx; i++) {
-			intm=dom.W[i][j][0];
-			Wden<<intm<<" ";
-		}
-		Wden<<endl;
-	}
-	Wden.close();
-
-	if (dom.IC=="BWy") {
-		ofstream Wdeny;
-		Wdeny.open("savefile/denBWy");
-		for (int j=0; j<dom.ny; j++) {
-			intm=dom.W[dom.nx/2][j][0];
-			Wdeny<<intm<<" ";
-		}
-		Wdeny.close();
-	}
-
-
-	ofstream Wu;
-	Wu.open("savefile/u_velocity");
-	for (int j=0; j<dom.ny; j++) {
-		for (int i=0; i<dom.nx; i++) {
-			intm=dom.W[i][j][1];
-			Wu<<intm<<" ";
-		}
-		Wu<<endl;
-	}
-	Wu.close();
-
-	ofstream Wv;
-	Wv.open("savefile/v_velocity");
-	for (int j=0; j<dom.ny; j++) {
-		for (int i=0; i<dom.nx; i++) {
-			intm=dom.W[i][j][2];
-			Wv<<intm<<" ";
-		}
-		Wv<<endl;
-	}
-	Wv.close();
-
-	ofstream Wp;
-	Wp.open("savefile/pressure");
-	for (int j=0; j<dom.ny; j++) {
-		for (int i=0; i<dom.nx; i++) {
-			intm=dom.W[i][j][4];
-			Wp<<intm<<" ";
-		}
-		Wp<<endl;
-	}
-	Wp.close();
-
-	if (dom.nvar>5) {
-		cout<<"Saving magnetic field too..."<<endl;
-		ofstream WBx;
-		WBx.open("savefile/Bx");
-		for (int j=0; j<dom.ny; j++) {
-			for (int i=0; i<dom.nx; i++) {
-				intm=dom.W[i][j][5];
-				WBx<<intm<<" ";
-			}
-			WBx<<endl;
-		}
-		WBx.close();
-		ofstream WBy;
-		WBy.open("savefile/By");
-		for (int j=0; j<dom.ny; j++) {
-			for (int i=0; i<dom.nx; i++) {
-				intm=dom.W[i][j][6];
-				WBy<<intm<<" ";
-			}
-			WBy<<endl;
-		}
-		WBy.close();
-	}
-
-}
-
 
 void savearray(meshblock &dom,real*** array, string arrname) {
 

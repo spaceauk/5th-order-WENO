@@ -3,7 +3,7 @@
 
 #include "defs.hpp"
 
-void IC2Dtype(meshblock &dom) {
+void meshblock::IC2Dtype(int nb) {
 	real tEnd, gamma;
 	vector<real> rinit(4),pinit(4),Einit(4);
 	vector<real> uinit(4),vinit(4),winit(4);
@@ -15,52 +15,47 @@ void IC2Dtype(meshblock &dom) {
 	Bxinit={0}; Byinit={0}; Bzinit={0};
 
 	// Set conditions for specific I.C.s selected
-	if (dom.IC=="SST" and dom.nvar==5) {
-		cout<<"2D Sod Shock tube config along x."<<endl;
+	if (IC=="SST") {
+		if (nb==0) cout<<"2D Sod Shock tube config along x."<<endl;
 		tEnd=0.2;
 		gamma=2.0;
 		pinit={0.1,1.0,1.0,0.1};
 		rinit={0.125,1.0,1.0,0.125};
 
-	} else if (dom.IC=="SBI" and dom.nvar==5) {
-		cout<<"Shock-bubble interaction problem:"<<endl;
-		cout<<"When a Mach 6 shock wave in air impacts on a cylindrical Helium bubble. Note that air & Helium are treated as the same ideal gas fluid for simplicity."<<endl;
-		if (dom.nx==dom.ny) {
-                        cout<<"Error domain size!"<<endl;
-                        throw exception();
-                }
-		tEnd=0.15;
-		pinit={1,41.83,1,0};
-		rinit={1,5.268,0.138,0};
-		uinit={-3,2.752,-3,0};		
-		gamma=1.4;
+	} else if (IC=="SST1") {
+		if (nb==0) cout<<"2D Sod Shock tube config along x (reverse direction)."<<endl;
+		tEnd=0.2;
+		gamma=2.0;
+		pinit={1.0,0.1,0.1,1.0};
+		rinit={1.0,0.125,0.125,1.0};
 
-	} else if (dom.IC=="VST" and dom.nvar==5 and dom.vis) {
-		cout<<"2D viscous shock tube."<<endl;
-		gamma=1.4;
-		tEnd=1;
-		real p_ref=101325;
-		real rho_ref=1.225;
-		real T_ref=p_ref/(rho_ref*R);
-		real cp=gamma*R/(gamma-1);
-		real cv=cp-gamma;
-		dom.Re=200.;
-		dom.Pr=0.72;
-		dom.Suth=110.4/T_ref;
-		pinit={1.2/gamma,120./gamma,120./gamma,1.2/gamma};
-		rinit={1.2,120.,120.,1.2};		
+	} else if (IC=="SSTy") {
+                if (nb==0) cout<<"2D Sod Shock tube config along y."<<endl;
+                tEnd=0.2;
+                gamma=2.0;
+                pinit={0.1,0.1,1.0,1.0};
+                rinit={0.125,0.125,1.0,1.0};
 
-	} else if (dom.IC=="BWx" and dom.nvar==8) {
-		cout<<"2D Brio & Wu shocktube config along x."<<endl;
+	} else if (IC=="BWx") {
+		if (nb==0) cout<<"2D Brio & Wu shocktube config along x."<<endl;
 		tEnd=0.2;
 		gamma=2.0;
 		pinit={0.1,1.0,1.0,0.1};
 		rinit={0.125,1.0,1.0,0.125};
 		Bxinit={0.75,0.75,0.75,0.75};
 		Byinit={-1.0,1.0,1.0,-1.0};
+	
+	} else if (IC=="BWx1") {
+		if (nb==0) cout<<"2D Brio & Wu shocktube config along x. (opposite direction)"<<endl;
+		tEnd=0.2;
+		gamma=2.0;
+		pinit={1.0,0.1,0.1,1.0};
+		rinit={1.0,0.125,0.125,1.0};
+		Bxinit={0.75,0.75,0.75,0.75};
+		Byinit={1.0,-1.0,-1.0,1.0};
 
-	} else if (dom.IC=="BWy" and dom.nvar==8) {
-		cout<<"2D Brio & Wu shocktube config along y."<<endl;
+	} else if (IC=="BWy") {
+		if (nb==0) cout<<"2D Brio & Wu shocktube config along y."<<endl;
 		tEnd=0.2;
 		gamma=2.0;
 		pinit={0.1,0.1,1.0,1.0};
@@ -68,6 +63,21 @@ void IC2Dtype(meshblock &dom) {
 		Byinit={0.75,0.75,0.75,0.75};
 		Bxinit={-1.0,-1.0,1.0,1.0};
 
+	} else if (IC=="BWy1") {
+		if (nb==0) cout<<"2D Brio & Wu shocktube config along y. (opposite direction)"<<endl;
+		tEnd=0.2;
+		gamma=2.0;
+		pinit={1.0,1.0,0.1,0.1};
+		rinit={1.0,1.0,0.125,0.125};
+		Byinit={0.75,0.75,0.75,0.75};
+		Bxinit={1.0,1.0,-1.0,-1.0};
+
+	} else if (IC=="rotor") {
+		if (nb==0) cout<<"MHD Rotor problem in 2D"<<endl;
+		gamma=1.4;
+		tEnd=0.295;
+		pinit[0]=0.5;
+		Bxinit[0]=2.5/(sqrt(4*pi));
 	} else {
 		cout<<"No valid initial condition chosen!"<<endl;
 		cout<<"Look at IC2Dtype file to choose the correct I.C.s!"<<endl;
@@ -76,86 +86,80 @@ void IC2Dtype(meshblock &dom) {
 	}
 
 	// Assign values to arrays (Must account for boundary cells)
-	real x, y;
-	if (dom.IC=="rotor") {
-	} else if (dom.IC=="SBI") {
-		// pre-shocked air, post-shocked air, Helium bubble
-		for (int i=1; i<dom.nx-1; i++) {
-                        x=i*dom.dx;
-                        for (int j=1; j<dom.ny-1; j++) {
-                                y=j*dom.dy;
-				real radius=sqrt(pow(x-0.25,2)+SQR(y));
-				if (radius<=0.15) {
-					dom.W[i][j][0]=rinit[2];
-                                        dom.W[i][j][1]=uinit[2];
-                                        dom.W[i][j][2]=vinit[2];
-                                        dom.W[i][j][3]=winit[2];
-                                        dom.W[i][j][4]=pinit[2];
-				} else if (radius>0.15 and x<=0.05) {
-					dom.W[i][j][0]=rinit[1];
-                                        dom.W[i][j][1]=uinit[1];
-                                        dom.W[i][j][2]=vinit[1];
-                                        dom.W[i][j][3]=winit[1];
-                                        dom.W[i][j][4]=pinit[1];
-				} else if (radius>0.15 and x>0.05) {
-					dom.W[i][j][0]=rinit[0];
-                                        dom.W[i][j][1]=uinit[0];
-                                        dom.W[i][j][2]=vinit[0];
-                                        dom.W[i][j][3]=winit[0];
-                                        dom.W[i][j][4]=pinit[0];
+	real x, y, radius;
+	if (IC=="rotor") {
+		for (int i=0; i<nx; i++) {
+			x=((i+icoord[nb][0]-nghosts)+0.5)*dx[lp[nb][0]] - dx[0];
+			for (int j=0; j<ny; j++) {
+				y=((j+icoord[nb][1]-nghosts)+0.5)*dy[lp[nb][0]] - dy[0];
+				radius=sqrt(pow(x-0.5,2)+pow(y-0.5,2));
+				real fr=(23.-200.*radius)/3.;
+				for (int k=0;k<nvar;k++) {W[i][j][k][nb]=0.;}
+				W[i][j][4][nb]=pinit[0];
+				W[i][j][5][nb]=Bxinit[0];
+				if (radius<=0.1) {
+					W[i][j][0][nb]=10.;
+					W[i][j][1][nb]=-(y-0.5)/0.1;
+					W[i][j][2][nb]=(x-0.5)/0.1;
+				} else if (radius>0.1 and radius<0.115) {
+					W[i][j][0][nb]=(1+9.*fr);
+					W[i][j][1][nb]=(-(y-0.5)*fr/0.1);
+					W[i][j][2][nb]=(x-0.5)*fr/0.1;
 				} else {
-					cout<<"Error as out designated domain!!!"<<endl;
-					throw exception();
+					W[i][j][0][nb]=1.;					
 				}
 			}
 		}
+
 	} else { 
-		for (int i=1; i<dom.nx-1; i++) {
-			x=i*dom.dx;			
-			for (int j=1; j<dom.ny-1; j++) {
-				y=j*dom.dy;
+		for (int i=0; i<nx; i++) {
+			x=((i+icoord[nb][0]-nghosts)+0.5)*dx[lp[nb][0]] - dx[0];
+			for (int j=0; j<ny; j++) {
+				y=((j+icoord[nb][1]-nghosts)+0.5)*dy[lp[nb][0]] - dy[0];
+
 				if (x>=0.5 and y>=0.5) {
-					dom.W[i][j][0]=rinit[0];
-					dom.W[i][j][1]=uinit[0];
-					dom.W[i][j][2]=vinit[0];
-					dom.W[i][j][3]=winit[0];
-					dom.W[i][j][4]=pinit[0];
-					if (dom.nvar==8) {
-						dom.W[i][j][5]=Bxinit[0];
-						dom.W[i][j][6]=Byinit[0];
-						dom.W[i][j][7]=Bzinit[0];				 	  }
+					W[i][j][0][nb]=rinit[0];
+					W[i][j][1][nb]=uinit[0];
+					W[i][j][2][nb]=vinit[0];
+					W[i][j][3][nb]=winit[0];
+					W[i][j][4][nb]=pinit[0];
+					if (MAG_field) {
+						W[i][j][5][nb]=Bxinit[0];
+						W[i][j][6][nb]=Byinit[0];
+						W[i][j][7][nb]=Bzinit[0];				 	 
+				       	}
 				} else if (x<0.5 and y>=0.5) {
-					dom.W[i][j][0]=rinit[1];
-					dom.W[i][j][1]=uinit[1];
-					dom.W[i][j][2]=vinit[1];
-					dom.W[i][j][3]=winit[1];
-					dom.W[i][j][4]=pinit[1];
-					if (dom.nvar==8) {
-						dom.W[i][j][5]=Bxinit[1];
-						dom.W[i][j][6]=Byinit[1];
-						dom.W[i][j][7]=Bzinit[1];
+					W[i][j][0][nb]=rinit[1];
+					W[i][j][1][nb]=uinit[1];
+					W[i][j][2][nb]=vinit[1];
+					W[i][j][3][nb]=winit[1];
+					W[i][j][4][nb]=pinit[1];
+					if (MAG_field) {
+						W[i][j][5][nb]=Bxinit[1];
+						W[i][j][6][nb]=Byinit[1];
+						W[i][j][7][nb]=Bzinit[1];
 					}
 				} else if (x<0.5 and y<0.5) {
-					dom.W[i][j][0]=rinit[2];
-					dom.W[i][j][1]=uinit[2];
-					dom.W[i][j][2]=vinit[2];
-					dom.W[i][j][3]=winit[2];
-					dom.W[i][j][4]=pinit[2];
-					if (dom.nvar==8) {
-						dom.W[i][j][5]=Bxinit[2];
-						dom.W[i][j][6]=Byinit[2];
-						dom.W[i][j][7]=Bzinit[2];
+					W[i][j][0][nb]=rinit[2];
+					W[i][j][1][nb]=uinit[2];
+					W[i][j][2][nb]=vinit[2];
+					W[i][j][3][nb]=winit[2];
+					W[i][j][4][nb]=pinit[2];
+					if (MAG_field) {
+						W[i][j][5][nb]=Bxinit[2];
+						W[i][j][6][nb]=Byinit[2];
+						W[i][j][7][nb]=Bzinit[2];
 					}
 				} else if (x>=0.5 and y<0.5) {
-					dom.W[i][j][0]=rinit[3];
-					dom.W[i][j][1]=uinit[3];
-					dom.W[i][j][2]=vinit[3];
-					dom.W[i][j][3]=winit[3];
-					dom.W[i][j][4]=pinit[3];
-					if (dom.nvar==8) {
-						dom.W[i][j][5]=Bxinit[3];
-						dom.W[i][j][6]=Byinit[3];
-						dom.W[i][j][7]=Bzinit[3];	
+					W[i][j][0][nb]=rinit[3];
+					W[i][j][1][nb]=uinit[3];
+					W[i][j][2][nb]=vinit[3];
+					W[i][j][3][nb]=winit[3];
+					W[i][j][4][nb]=pinit[3];
+					if (MAG_field) {
+						W[i][j][5][nb]=Bxinit[3];
+						W[i][j][6][nb]=Byinit[3];
+						W[i][j][7][nb]=Bzinit[3];	
 					}
 				}	
 			}
@@ -164,5 +168,23 @@ void IC2Dtype(meshblock &dom) {
 	}
 
 	// Assign values from initial condition to class parameters
-	dom.setParam(gamma,tEnd);
+	setParam(gamma,tEnd);
+
+	// Initialize magnetic field for constrained transport method
+	if (CT_mtd) {
+		for (int i=0; i<nx; i++) {
+			for (int j=0; j<ny; j++) {
+				// 20 -----------
+				//    | 10 | 11 |
+				// 10 -----------
+				//    | 00 | 01 | 
+				// 00 -----------  Thus, 01e=0.5*(00c+01c)
+				//   00   01   02
+				if (i<nx-1) {Bi[i+1][j][0][nb]=0.5*(W[i][j][5][nb]+W[i+1][j][5][nb]);}
+				else {Bi[0][j][0][nb]=Bi[1][j][0][nb];}
+				if (j<ny-1) {Bi[i][j+1][1][nb]=0.5*(W[i][j][6][nb]+W[i][j+1][6][nb]);}
+				else {Bi[i][0][1][nb]=Bi[i][1][1][nb];}
+			}
+		}
+	}
 }

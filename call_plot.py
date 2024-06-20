@@ -40,25 +40,46 @@ frame_no=0
 for fil_name in allfiles_sorted:
     fname=data_path+fil_name
     data=np.loadtxt(fname)
-    Z=np.reshape(data[:,plotvar+2],(ny,nx))
-    X=np.reshape(data[:,0],(ny,nx))
-    Y=np.reshape(data[:,1],(ny,nx))
-    plt.title(pvar,loc='left')
-    plt.title(fil_name)
-    plt.xlabel('x')
-    plt.ylabel('y')
-    CS=plt.contour(X,Y,Z,30,cmap=plt.cm.gray)
-    #CS=plt.contour(X,Y,Z,10,colors='k')
-    #plt.clabel(CS,inline=True,fontsize=10)
-    plt.colorbar()
-    plt.savefig(plot_path + ICtype + '_' + pvar + str(frame_no).zfill(3)+'.png')
-    plt.clf()
-    plt.gca().set_aspect("equal")
-    frame_no=frame_no+1
-    if (frame_no % 10==0):
-        sys.stdout.write('\rPlotting file at '+str(frame_no)+'/'+str( len(allfiles)))
-        sys.stdout.flush()
 
-print("")
-print("Completed plots!")
+# extract x and y coordinates
+sorted_indices = np.argsort(data[:,0])
+sorted_x = data[:,0][sorted_indices]
+sorted_y = data[:,1][sorted_indices]
+x = data[:, 0]
+y = data[:, 1]
+
+# create plot for mesh
+fig, ax = plt.subplots()
+ax.set_aspect("equal")
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_title("Mesh Grid")
+ax.grid(True)
+
+for i in range(ny):
+    start = i * nx +1
+    end = start + nx 
+    ax.plot(x[start:end], y[start:end], "r-", lw=0.5)
+    
+for i in range(nx):
+    ax.plot(x[i::nx], y[i::nx], "r-", lw=0.5)
+
+# Linear plot
+plt.figure()
+plt.subplot(1,2,1)
+sorted_indices = np.argsort(data[:,0])
+sorted_X = data[:,0][sorted_indices]
+sorted_Z = data[:,plotvar+4][sorted_indices]
+plt.plot(sorted_X,sorted_Z,".")
+plt.grid()
+plt.subplot(1,2,2)
+sorted_indices = np.argsort(data[:,1])
+sorted_Y = data[:,1][sorted_indices]
+sorted_Z = data[:,plotvar+4][sorted_indices]
+plt.plot(sorted_Y,sorted_Z,".")
+plt.grid()
+#plt.figure()
+#plt.scatter(data[:,0],data[:,1])
+#plt.grid()
+plt.show()
 
